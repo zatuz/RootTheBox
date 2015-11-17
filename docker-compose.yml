@@ -1,0 +1,25 @@
+#
+# Not an ideal setup yet, we'll want to eventually add an nginx box infront of
+# the python process to serve static content/etc.
+#
+
+memcache:
+  image: memcached:latest
+
+sql:
+  image: mysql:latest
+  environment:
+    - MYSQL_DATABASE=rootthebox
+    - MYSQL_USER=rootthebox
+    - MYSQL_PASSWORD=badpassword
+    - MYSQL_ROOT_PASSWORD=toor
+
+rtb:
+  build: .
+  ports:
+    - "80:8888"
+  volumes:
+    - ./files:/opt/rtb/files:rw
+  links:
+    - sql
+    - memcache
