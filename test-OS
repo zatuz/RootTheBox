@@ -1,9 +1,0 @@
-#!/bin/bash
-if  grep -qi "ubuntu": /etc/*release*; then
-  add-apt-repository universe
-elif  grep -qi "debian": /etc/*release*; then
-apt-get install software-properties-common
-add-apt-repository main
-add-apt-repository contrib
-add-apt-repository non-free
-fi
