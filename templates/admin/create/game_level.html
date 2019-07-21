@@ -1,0 +1,86 @@
+{% extends "../../main.html" %}
+
+{% block title %}Create Game Level{% end %}
+
+{% block header %}
+<script src="/static/js/pages/admin/create/game_level.js"></script>
+{% end %}
+
+{% block content %}
+{% from tornado.options import options %}
+<div class="container">
+    <h1>
+        <i class="fa fa-level-up"></i>
+        Create Game Level
+    </h1>
+    <br />
+    {% if errors is not None and len(errors) != 0 %}
+        {% for error in errors %}
+        <div class="alert alert-error">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            <h4 class="alert-heading">ERROR</h4>
+            {{ error }}
+        </div>
+        {% end %}
+    {% end %}
+    <div class="well">
+        <form class="form-horizontal" action="/admin/create/game_level" method="post">
+            {% raw xsrf_form_html() %}
+            <div class="control-group">
+                <label class="control-label" for="level_number">Level Number</label>
+                <div class="controls">
+                    <input autofocus required id="level-number" name="level_number" type="text" pattern="[0-9]+" placeholder="Level Number"
+                            rel="popover"
+                            data-original-title="Level Number"
+                            data-content="Nuber of new Level [0-9]+ Must be unique" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="game_level-name">Level Name</label>
+                <div class="controls">
+                    <input id="game_level-name" name="name" placeholder="Level Name" maxlength=32  
+                        rel="popover"
+                        data-original-title="Level Name"
+                        data-content="(Optional) defaults to &#34;Level #&#34;" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="game_level-reward">Completion Reward</label>
+                <div class="controls">
+                    <input id="game_level-reward" name="reward" pattern="[0-9]+" value=0 placeholder="Reward" type="number" min=0  
+                        rel="popover"
+                        data-original-title="Completion Reward"
+                        data-content="Bonus reward for those that complete the level." />
+                </div>
+            </div>
+            <div id="gametype" class="control-group">
+                <label class="control-label" for="game_level-type">Unlock Level</label>
+                <div class="controls">
+                    <select id="game_level-type" name="type"
+                        rel="popover"
+                        data-original-title="Unlock Level"
+                        data-content="Bonus reward for those that complete the level.">
+                        <option value="none">No Lock</option>
+                        <option value="buyout" selected>Purchase Unlock</option>
+                        <option value="progress">Game Progress</option>
+                    </select>
+                </div>
+            </div>
+            <div id="buyoutcost" class="control-group">
+                <label id="buyoutlabel" class="control-label" for="buyout">Unlock Cost</label>
+                <div class="controls">
+                    <input id="buyout" name="buyout" type="number" pattern="[0-9]+" placeholder="" type="number" value=50 min=0
+                            rel="popover"
+                            data-original-title="Unlock Cost"
+                            data-content="Cost to open this level and see flags [0-9]+" />
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <button class="btn btn-primary" type="submit">Create Game Level</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% end %}

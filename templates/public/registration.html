@@ -1,0 +1,244 @@
+{% extends "../main.html" %}
+
+{% block title %}Registration{% end %}
+
+{% block header %}
+    <link rel="stylesheet" href="/static/css/pages/public/registration.css" type="text/css" />
+    <script src="/static/js/pages/public/registration.js"></script>
+{% end %}
+
+{% block modals %}
+{% from libs.XSSImageCheck import get_new_avatar %}
+{% from tornado.options import options %}
+{% from libs.XSSImageCheck import filter_avatars %}
+{% from libs.XSSImageCheck import existing_avatars %}
+{% from models.Team import Team %}
+    <!-- Select Avatar -->
+    {% if options.teams %}
+        {% set dir = "user" %}
+    {% else %}
+        {% set dir = "team" %}
+    {% end %}
+    {% set avatars = filter_avatars("user") %}
+    {% set existing = existing_avatars(dir) %}
+    <div id="change-user-avatar-modal" class="modal hide fade" style="display: none; {% if len(avatars) > 0 %}width: 750px; margin-left: -375px;{% end %}">
+    <div class="modal-header">
+        <button id="avatarclose" type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Select Avatar</h3>
+    </div>
+    <div class="modal-body">
+        {% raw xsrf_form_html() %}
+        {% if len(avatars) > 0 %}
+        <div style="border-top: solid 1px rgb(92, 92, 92); margin-top: -5px; margin-bottom: 20px;"></div>
+        <span style="float: right; padding-right: 10px; margin-top: -15px; font-size: small;"><i class="fa fa-certificate"></i> indicates use by another player</span>
+        <br>
+            {% for avatar in avatars[::3] %}
+                <div class="row">
+                    <div class="span3" style="position: relative;">
+                        <center>
+                            {% if avatar in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                            <a href="#" class="useravatarimg" value="{{avatar}}"><img src="/avatars/{{avatar}}"  class="img-polaroid" style="width: 200px;"></a>
+                        </center>
+                    </div>
+                    {% if avatars.index(avatar) + 1 < len(avatars) %}
+                        {% set avatar1 = avatars[avatars.index(avatar) + 1] %}
+                        <div class="span3" style="position: relative;">
+                            <center>
+                                {% if avatar1 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                <a href="#" class="useravatarimg" value="{{avatar1}}"><img src="/avatars/{{avatar1}}"  class="img-polaroid" style="width: 200px;"></a>
+                            </center>
+                        </div>
+                    {% end %}
+                    {% if avatars.index(avatar) + 2 < len(avatars) %}
+                        {% set avatar2 = avatars[avatars.index(avatar) + 2] %}
+                        <div class="span3" style="position: relative;">
+                            <center>
+                                {% if avatar2 in existing %}<i class="fa fa-certificate avatarused"></i><i class="fa fa-certificate avatarused-top"></i>{% end %}
+                                <a href="#" class="useravatarimg" value="{{avatar2}}"><img src="/avatars/{{avatar2}}"  class="img-polaroid" style="width: 200px;"></a>
+                            </center>
+                        </div>
+                    {% end %}
+                </div>
+                <br/>
+            {% end %}
+        {% end %}
+    
+    </div>
+</div>
+{% end %}
+
+{% block content %}
+    <div class="container">
+        <h1>
+            <i class="fa fa-pencil"></i>
+            Registration
+        </h1>
+        <br />
+        {% if errors is not None and len(errors) != 0 %}
+            {% for error in errors %}
+                <div class="alert alert-error">
+                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                    <h4 class="alert-heading">ERROR</h4>
+                    {{ error }}
+                </div>
+            {% end %}
+        {% end %}
+        <div class="well" style="position: relative;">
+        {% if not suspend %}
+            <legend>
+                Welcome to the Scene
+            </legend><!-- http://www.youtube.com/watch?v=xIs_5nfJKu4&list=PLC2FCB2871C396459 -->
+            <form class="form-horizontal" action="/registration" method="post" enctype="multipart/form-data">
+                {% raw xsrf_form_html() %}
+                {% set avatarimg = get_new_avatar("user", not options.teams) %}
+                <div class="control-group" style="float: right; position: absolute; right: 30px; top: 40px;">
+                    <img id="avatarimage" src="/avatars/{{avatarimg}}" class="img-polaroid" style="width: 350px; height: 175px; object-fit: cover"/>
+                    <div class="controls" style="margin-top: 15px; margin-left: 0px;">
+                        <input id="user_avatar_select" name="user_avatar_select" type="hidden" value="{{avatarimg}}" />
+                        {% if len(avatars) > 0 %}<a data-toggle="modal" class="btn btn-primary" href="#change-user-avatar-modal"> Select New Avatar </a>&nbsp;&nbsp;{% end %}
+                        <a id="uploadbutton" class="btn btn-primary" href="#">Upload Avatar</a>&nbsp;&nbsp;(w500 x h250)
+                        <input id="user-avatar" name="avatar" type="file" style="display: none;"/>
+                     </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="handle">
+                        <i class="fa fa-user"></i>
+                        Handle
+                    </label>
+                    <div class="controls">
+                        <input required id="handle" name="handle" maxlength="16" minlength="3" placeholder="Player Alias" type="text"
+                            rel="popover" pattern="^[a-zA-Z0-9_\-\.]{3,16}$"
+                            data-original-title="Player Alias"
+                            data-content="Your handle must be 3-16 alpha-numeric characters.  Underscore, dash, and dots allowed." />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="playername">
+                        Player's Name
+                    </label>
+                    <div class="controls">
+                        <input required id="playername" name="playername" maxlength="64" minlength="3" placeholder="Name" type="text"
+                            rel="popover" pattern="^[a-zA-Z0-9 ]{3,64}$"
+                            data-original-title="Player&#x27;s Name"
+                            data-content="Your name, visible to game administrators.  Your name can be 3-64 alpha-numeric characters" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="email">
+                        Email
+                    </label>
+                    <div class="controls">
+                        <input {% if options.require_email %}required {% end %}id="email" name="email" maxlength="64" minlength="3" placeholder="Email" type="text"
+                            rel="popover" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                            data-original-title="Player&#x27;s Email"
+                            data-content="Your email, visible to game administrators." />
+                    </div>
+                </div>
+                <hr style="margin-right: 400px;">
+                {% if options.teams %}
+                    {% if options.public_teams %}
+                        <input type="radio" class="teammode" name="teammode" value="join" checked><h5 style="display: inline;">Join Existing Team</h5>
+                        <input type="radio" class="teammode" name="teammode" value="create"><h5 style="display: inline;">Start a New Team</h5>
+                        <br/><br/>
+                        <div id="teammode-create" style="display: none;">
+                            <div class="control-group">
+                                <label class="control-label" for="team_name">Team Name</label>
+                                <div class="controls">
+                                    <input id="team-name" name="team_name" maxlength="24" minlength="3" type="text" placeholder="Team Name"
+                                        rel="popover"
+                                        data-original-title="New Team Name"
+                                        data-content="Choose a name for your new team! [3-24 Characters]" >
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="motto">Motto</label>
+                                <div class="controls">
+                                    <input id="motto" name="motto" maxlength="32" type="text" placeholder="Team Motto"
+                                        rel="popover"
+                                        data-original-title="Team Motto"
+                                        data-content="Optional: What&#x27;s your team&#x27;s motto? [Max: 32 Characters]">
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <h5 style="margin-left: 20px; margin-bottom: 15px;">Join Existing Team</h5>
+                    {% end %}
+                    <div id="teammode-join" class="control-group">
+                        <label class="control-label" for="team-code">Team Code</label>
+                        <div class="controls">
+                            <input id="team-code" name="team-code" type="text" placeholder="Team Code"
+                                rel="popover"
+                                data-original-title="Team Code"
+                                data-content="Provide the code used to join an existing team.  Visible to other team members on their home page." >
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="control-group">
+                        <label class="control-label" for="motto">Motto</label>
+                        <div class="controls">
+                            <input id="motto" name="motto" maxlength="32" type="text" placeholder="Motto"
+                                rel="popover"
+                                data-original-title="Motto"
+                                data-content="Optional: What&#x27;s your motto? [Max: 32 Characters]">
+                        </div>
+                    </div>
+                {% end %}
+                <hr style="margin-right: 400px;">
+                <div class="control-group">
+                    <label class="control-label" for="pass1">Account Password</label>
+                    <div class="controls">
+                        <input required id="pass1" name="pass1" minlength="{{ options.min_user_password_length }}"  placeholder="Password" type="password"
+                            autocomplete="off"
+                            rel="popover"
+                            data-original-title="Password"
+                            data-content="Enter a complex password of {{ options.min_user_password_length }}+ characters" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="pass2">Confirm Account Password</label>
+                    <div class="controls">
+                        <input required id="pass2" name="pass2" minlength="{{ options.min_user_password_length }}"  placeholder="Confirm Password" type="password"
+                            autocomplete="off"
+                            rel="popover"
+                            data-original-title="Confirm Password"
+                            data-content="Enter the same password as before" />
+                    </div>
+                </div>
+                {% if options.banking %}
+                <div class="control-group">
+                    <label class="control-label" for="bpass1">Bank Account Password</label>
+                    <div class="controls">
+                        <input required id="bpass" name="bpass" maxlength="{{ options.max_password_length }}" placeholder="Bank Account Password" type="password"
+                            autocomplete="off"
+                            rel="popover"
+                            data-original-title="Password"
+                            data-content="Used to secure your (in-game) bank account. [Max: {{ options.max_password_length }} characters].  Please do NOT enter your real bank account password." />
+                    </div>
+                </div>
+                {% end %}
+                {% if options.restrict_registration %}
+                    <div class="control-group">
+                        <label class="control-label" for="token">Registration Token</label>
+                        <div class="controls">
+                            <input required id="regtoken" name="token" placeholder="Token" type="text"
+                                rel="popover" pattern="^[a-fA-F0-9]{1,6}$"
+                                data-original-title="Registration Token"
+                                data-content="Get your registration token from reception" />
+                        </div>
+                    </div>
+                {% end %}
+                <br />
+                <div class="control-group">
+                    <div class="controls">
+                        <button class="btn btn-primary" type="submit">
+                            Register Account
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <h4 style="text-align: center;"><i class="fa fa-group"></i>&nbsp;&nbsp;The game is not accepting new players at this time.</h4>
+        {% end %}
+        </div>
+    </div>
+{% end %}
